@@ -1,23 +1,22 @@
 import os
+import asyncio
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import threading
 
-# جلب التوكن من متغيرات البيئة (Render Environment Variables)
-TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+# جلب التوكن من متغيرات البيئة
+TOKEN = os.getenv(8737811338:AAEyFElH3znciEzHnpBmyOeFOA9RLd4CP7Q)
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("أهلاً بك! أنا مساعدك الذكي Hermes Agent. كيف يمكنني مساعدتك اليوم؟")
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_text = update.message.text
-    # هنا يمكنك إرسال user_text إلى الـ API الخاص بـ Hermes وجلب الرد
-    # سنضع رداً تلقائياً مؤقتاً للتأكد من عمل البوت
     reply = f"لقد استلمت رسالتك: {user_text} \n(جاري ربط الـ Agent حالياً...)"
     await update.message.reply_text(reply)
 
-# سيرفر وهمي صغير فقط لإبقاء Render سعيداً ولا يغلق الخدمة
+# سيرفر وهمي لإبقاء Render سعيداً
 class HealthCheckHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
@@ -28,17 +27,29 @@ def run_health_check():
     server = HTTPServer(('0.0.0.0', int(os.getenv("PORT", 8080))), HealthCheckHandler)
     server.serve_forever()
 
-def main():
-    # تشغيل السيرفر الوهمي في خلفية الكود
+async def main():
+    # تشغيل السيرفر الوهمي في الخلفية
     threading.Thread(target=run_health_check, daemon=True).start()
 
-    # تشغيل البوت بنظام Polling
+    # بناء وتشغيل البوت بشكل متوافق مع خوادم الويب
     app = Application.builder().token(TOKEN).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     
-    print("البوت يعمل الآن...")
-    app.run_polling()
+    print("البوت يبدأ الآن...")
+    
+    # هذه الطريقة تمنع انهيار السيرفر status 1
+    await app.initialize()
+    await app.start()
+    await app.updater.start_polling()
+    
+    # إبقاء البوت يعمل دون توقف
+    while True:
+        await asyncio.sleep(3600)
 
 if __name__ == "__main__":
-    main()
+    # تشغيل المجلد الرئيسي بأمان
+    try:
+        asyncio.run(main())
+    except (KeyboardInterrupt, SystemExit):
+        pass
