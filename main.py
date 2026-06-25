@@ -6,7 +6,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 import threading
 
 # جلب التوكن من متغيرات البيئة
-TOKEN = os.getenv(8737811338:AAEyFElH3znciEzHnpBmyOeFOA9RLd4CP7Q)
+TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("أهلاً بك! أنا مساعدك الذكي Hermes Agent. كيف يمكنني مساعدتك اليوم؟")
