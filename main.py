@@ -21,24 +21,27 @@ OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 if not TOKEN or not OPENROUTER_API_KEY:
     raise ValueError("Missing environment variables!")
 
-# LLM + Tools + Memory
+# Improved LLM + Tools + Memory
 llm = ChatOpenAI(
     model="openai/gpt-4o-mini",
     openai_api_key=OPENROUTER_API_KEY,
     openai_api_base="https://openrouter.ai/api/v1",
-    temperature=0.7
+    temperature=0.6
 )
 
 tools = [web_search, calculator]
 
 memory = ConversationBufferWindowMemory(
-    k=10,
+    k=12,
     return_messages=True,
     memory_key="chat_history"
 )
 
 prompt = ChatPromptTemplate.from_messages([
-    ("system", "You are Hermes Agent, a helpful, fast and intelligent assistant. Use tools when needed."),
+    ("system", """You are Hermes Agent, a very intelligent and helpful assistant.
+Always use tools when the user asks for current information, news, search, calculations, or anything that needs up-to-date data.
+Never rely only on your internal knowledge for recent events.
+Answer in Arabic unless the user asks in English."""),
     ("placeholder", "{chat_history}"),
     ("human", "{input}"),
     ("placeholder", "{agent_scratchpad}"),
@@ -47,23 +50,23 @@ prompt = ChatPromptTemplate.from_messages([
 agent = create_tool_calling_agent(llm, tools, prompt)
 agent_executor = AgentExecutor(agent=agent, tools=tools, memory=memory, verbose=True)
 
-# Telegram Handlers
+# Handlers
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Hermes Agent is ready!")
+    await update.message.reply_text("Hermes Agent is ready! ✅")
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_text = update.message.text
-    await update.message.reply_text("Thinking...")
+    await update.message.reply_text("🤔 جاري التفكير...")
 
     try:
         response = agent_executor.invoke({"input": user_text})
         reply = response["output"]
     except Exception as e:
-        reply = "Sorry, an error occurred."
+        reply = f"حصل خطأ: {str(e)}"
 
     await update.message.reply_text(reply)
 
-# Keep-alive Server
+# Keep-alive
 class HealthCheckHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
@@ -75,7 +78,6 @@ def run_server():
     server = HTTPServer(("0.0.0.0", port), HealthCheckHandler)
     server.serve_forever()
 
-# Main
 def main():
     threading.Thread(target=run_server, daemon=True).start()
 
