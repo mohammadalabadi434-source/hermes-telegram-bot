@@ -30,15 +30,17 @@ llm = ChatOpenAI(
 
 tools = [web_search, calculator]
 
-memory = ConversationBufferWindowMemory(k=15, return_messages=True, memory_key="chat_history")
+memory = ConversationBufferWindowMemory(k=10, return_messages=True, memory_key="chat_history")
 
 prompt = ChatPromptTemplate.from_messages([
-    ("system", """You are Hermes Agent - a highly intelligent assistant.
-Rules:
-- For ANY current events, news, weather, prices, or recent information: ALWAYS use the web_search tool first.
-- Do not say your knowledge is old. Use tools instead.
+    ("system", """You are Hermes Agent.
+You have two tools: web_search and calculator.
+
+CRITICAL RULES:
+- If the user asks about news, current events, recent information, weather, prices, or anything after 2023 → You MUST use the web_search tool immediately.
+- Never say "I don't have updated information". Always use the tool.
 - Answer in Arabic.
-- Be direct and helpful."""),
+- Be concise and direct."""),
     ("placeholder", "{chat_history}"),
     ("human", "{input}"),
     ("placeholder", "{agent_scratchpad}"),
@@ -48,17 +50,17 @@ agent = create_tool_calling_agent(llm, tools, prompt)
 agent_executor = AgentExecutor(agent=agent, tools=tools, memory=memory, verbose=True)
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Hermes Agent ✅ جاهز")
+    await update.message.reply_text("Hermes Agent ✅")
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_text = update.message.text
-    await update.message.reply_text("🤔 جاري البحث والتفكير...")
+    await update.message.reply_text("🤔 جاري البحث...")
 
     try:
         response = agent_executor.invoke({"input": user_text})
         reply = response["output"]
     except Exception as e:
-        reply = f"خطأ: {str(e)}"
+        reply = f"خطأ داخلي: {str(e)}"
 
     await update.message.reply_text(reply)
 
