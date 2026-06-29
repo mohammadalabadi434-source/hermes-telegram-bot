@@ -1,8 +1,8 @@
-python-telegram-bot==20.8
-requests==2.31.0
+python-telegram-bot==21.5
+langchain==0.2.16
+langchain-openai==0.1.23
+langchain-community==0.2.16
+duckduckgo-search==6.2.13
 python-dotenv==1.0.1
-langchain==0.3.0
-langchain-openai==0.2.0
-langchain-community==0.3.0
-duckduckgo-search==6.0.0
-langchain-core==0.3.0
+apscheduler==3.10.4
+pytz==2024.1
